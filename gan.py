@@ -151,10 +151,14 @@ checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
                                  generator=generator,
                                  discriminator=discriminator)
 
+checkpoint.restore(checkpoint_dir + '/ckpt-13')
+
 def train(dataset, epochs):
     epoch = 0
     for epoch in range(epochs):
         i = 0
+        avg_gen_loss = 0
+        avg_disc_loss = 0
         for image_batch, labels in dataset:
             i += 1
             real_output, fake_output, gen_loss, disc_loss = train_step(image_batch, labels)
@@ -168,13 +172,20 @@ def train(dataset, epochs):
                          ))
             if i == len(dataset):
                 break
+            avg_gen_loss += gen_loss.numpy()
+            avg_disc_loss += disc_loss.numpy()
+        # save losses every epoch for plotting
+        open('./losses/gen_loss.txt', 'a').write('\n')
+        open('./losses/gen_loss.txt', 'a').write(str(avg_gen_loss/len(dataset)))
+        open('./losses/disc_loss.txt', 'a').write('\n')
+        open('./losses/disc_loss.txt', 'a').write(str(avg_disc_loss/len(dataset)))
         # Save the model every 10 epochs
         if (epoch + 1) % 10 == 0:
             checkpoint.save(file_prefix = checkpoint_prefix)
             tf.print('checkpoint created! %s epochs completed' % str(epoch+1))
 
 
-EPOCHS = 100
+EPOCHS = 70
 
 train(train_ds, EPOCHS)
 
