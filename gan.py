@@ -35,10 +35,6 @@ def make_discriminator_model():
     fe = tf.keras.layers.Conv2D(128, (5, 5), strides=(2, 2), padding='same')(fe)
     fe = tf.keras.layers.LeakyReLU()(fe)
     fe = tf.keras.layers.Dropout(0.3)(fe)
-    
-    fe = tf.keras.layers.Conv2D(256, (5, 5), strides=(2, 2), padding='same')(fe)
-    fe = tf.keras.layers.LeakyReLU()(fe)
-    fe = tf.keras.layers.Dropout(0.3)(fe)
 
     fe = tf.keras.layers.Flatten()(fe)
     out_layer = tf.keras.layers.Dense(1)(fe)
@@ -51,54 +47,35 @@ def make_generator_model():
     in_label = tf.keras.layers.Input(shape=(1,))
     li = tf.keras.layers.Embedding(2, 50)(in_label)
     
-    n_nodes = 2 * 2
+    n_nodes = 16 * 16
     
     li = tf.keras.layers.Dense(n_nodes)(li)
     
-    li = tf.keras.layers.Reshape((2, 2, 1))(li)
+    li = tf.keras.layers.Reshape((16, 16, 1))(li)
     
     in_lat = tf.keras.layers.Input(shape=(100,))
     
-    n_nodes = 256 * 2 * 2
+    n_nodes = 256 * 16 * 16
     
     gen = tf.keras.layers.Dense(n_nodes)(in_lat)
-    gen = tf.keras.layers.LeakyReLU(alpha=0.2)(gen)
-    gen = tf.keras.layers.Reshape((2, 2, 256))(gen)
-    
-    merge = tf.keras.layers.Concatenate()([gen, li])
-    
-    gen = tf.keras.layers.Dense(2*2*64, use_bias=False, input_shape=(100,))(merge)
     gen = tf.keras.layers.BatchNormalization()(gen)
     gen = tf.keras.layers.LeakyReLU()(gen)
-
-    gen = tf.keras.layers.Reshape((2, 2, 256))(gen)
+    gen = tf.keras.layers.Reshape((16, 16, 256))(gen)
     
-    gen = tf.keras.layers.Conv2DTranspose(512, (4, 4), strides=(1, 1), padding='same', use_bias=False)(gen)
-    gen = tf.keras.layers.BatchNormalization()(gen)
-    gen = tf.keras.layers.ReLU()(gen)
-    print(gen.shape)
+    merge = tf.keras.layers.Concatenate()([gen, li])
+    print(merge.shape)
 
-    gen = tf.keras.layers.Conv2DTranspose(256, (4, 4), strides=(2, 2), padding='same', use_bias=False)(gen)
-    gen = tf.keras.layers.BatchNormalization()(gen)
-    gen = tf.keras.layers.ReLU()(gen)
-    print(gen.shape)
-
-    gen = tf.keras.layers.Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same', use_bias=False)(gen)
-    gen = tf.keras.layers.BatchNormalization()(gen)
-    gen = tf.keras.layers.ReLU()(gen)
-    print(gen.shape)
-
-    gen = tf.keras.layers.Conv2DTranspose(64, (4, 4), strides=(2, 2), padding='same', use_bias=False)(gen)
+    gen = tf.keras.layers.Conv2DTranspose(128, (5, 5), strides=(1, 1), padding='same', use_bias=False)(merge)
     gen = tf.keras.layers.BatchNormalization()(gen)
     gen = tf.keras.layers.ReLU()(gen)
     print(gen.shape)
     
-    gen = tf.keras.layers.Conv2DTranspose(32, (4, 4), strides=(2, 2), padding='same', use_bias=False)(gen)
+    gen = tf.keras.layers.Conv2DTranspose(64, (5, 5), strides=(2, 2), padding='same', use_bias=False)(gen)
     gen = tf.keras.layers.BatchNormalization()(gen)
     gen = tf.keras.layers.ReLU()(gen)
     print(gen.shape)
 
-    gen = tf.keras.layers.Conv2DTranspose(1, (4, 4), strides=(2, 2), padding='same', use_bias=False)(gen)
+    gen = tf.keras.layers.Conv2DTranspose(1, (5, 5), strides=(2, 2), padding='same', use_bias=False)(gen)
     out_layer = tf.keras.layers.Activation(activation='tanh')(gen)
     print(out_layer.shape)
     
@@ -151,7 +128,7 @@ checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
                                  generator=generator,
                                  discriminator=discriminator)
 
-checkpoint.restore(checkpoint_dir + '/ckpt-13')
+checkpoint.restore(checkpoint_dir + '/ckpt-10')
 
 def train(dataset, epochs):
     epoch = 0
@@ -185,7 +162,7 @@ def train(dataset, epochs):
             tf.print('checkpoint created! %s epochs completed' % str(epoch+1))
 
 
-EPOCHS = 70
+EPOCHS = 100
 
 train(train_ds, EPOCHS)
 
